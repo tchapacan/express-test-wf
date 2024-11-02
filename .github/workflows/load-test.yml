@@ -1,34 +1,36 @@
-name: "Manual Load Test"
+name: "Express Load Test"
+
+permissions:
+  contents: read
+  pull-requests: write
 
 on:
-  push:
-    branches: ['load-test-action']
   pull_request:
     types: [ opened, synchronize ]
   workflow_dispatch:
     inputs:
       prev_branch:
-        description: 'Previous Branch Name'
+        description: 'Base branch (branch-branch)'
         required: false
-        default: 'master'
+        default: ''
       curr_branch:
-        description: 'Current Branch Name'
+        description: 'Head branch (branch-branch)'
         required: false
         default: ''
       prev_version:
-        description: 'Previous Express Version'
+        description: 'Base Version (version-version)'
         required: false
         default: ''
       curr_version:
-        description: 'Current Express Version'
+        description: 'Head Version (version-version)'
         required: false
         default: ''
       version:
-        description: 'Express Version'
+        description: 'Version (version-branch)'
         required: false
         default: ''
       branch:
-        description: 'Branch Name'
+        description: 'Branch (version-branch)'
         required: false
         default: ''
 
@@ -54,7 +56,7 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event_name }}" == "push" ]]; then
             # Branch comparison: Default to master for previous branch and use PR branch for current branch
-            echo "PREV_BRANCH=master" >> $GITHUB_ENV
+            echo "PREV_BRANCH=main" >> $GITHUB_ENV
             echo "CURR_BRANCH=${{ github.head_ref || github.ref_name }}" >> $GITHUB_ENV
           elif [[ "${{ github.event.inputs.prev_version }}" && "${{ github.event.inputs.curr_version }}" ]]; then
             # Version comparison
@@ -88,3 +90,10 @@ jobs:
         run: |
           cat benchmarks/results*.md >> $GITHUB_STEP_SUMMARY
 
+      - name: Post Summary to PR
+        if: github.event_name == 'pull_request'
+        run: |
+          cat $GITHUB_STEP_SUMMARY
+          gh pr comment ${{ github.event.pull_request.number }} --body "$(cat benchmarks/results*.md)"
+        env:
+          GH_TOKEN: ${{ github.token }}

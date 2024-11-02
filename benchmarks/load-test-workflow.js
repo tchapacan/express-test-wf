@@ -65,12 +65,13 @@ const runTests = async ({
   connectionsList,
   middlewareCounts,
   outputFile,
-  useLocalExpress,
   isVersionTest = false
 }) => {
   if (isVersionTest) {
+    console.log(`Installing Express v${identifier}...`)
     runCommand(`npm install express@${identifier}`)
   } else {
+    console.log(`Checking out branch ${identifier}...`)
     runCommand(`git checkout ${identifier}`)
     runCommand('npm install')
   }
@@ -81,7 +82,7 @@ const runTests = async ({
 
   for (const middlewareCount of middlewareCounts) {
     try {
-      const server = await startServer(middlewareCount, useLocalExpress)
+      const server = await startServer(middlewareCount, isVersionTest)
       const results = runLoadTest(
         'http://127.0.0.1:3333/?foo[bar]=baz',
         connectionsList
@@ -152,7 +153,6 @@ const compareBranchAndVersion = async ({
   version,
   connectionsList,
   middlewareCounts,
-  useLocalExpress
 }) => {
   console.log(`Comparing branch ${branch} with Express version ${version}`)
   await runTests({
@@ -172,7 +172,7 @@ const compareBranchAndVersion = async ({
 }
 
 const main = async () => {
-  const connectionsList = [50, 100, 250]
+  const connectionsList = [50, 100, 250, 500]
   const middlewareCounts = [1, 10, 25, 50]
   const prevBranch = process.env.PREV_BRANCH
   const currBranch = process.env.CURR_BRANCH

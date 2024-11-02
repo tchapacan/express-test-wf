@@ -1,0 +1,90 @@
+name: "Manual Load Test"
+
+on:
+  push:
+    branches: ['load-test-action']
+  pull_request:
+    types: [ opened, synchronize ]
+  workflow_dispatch:
+    inputs:
+      prev_branch:
+        description: 'Previous Branch Name'
+        required: false
+        default: 'master'
+      curr_branch:
+        description: 'Current Branch Name'
+        required: false
+        default: ''
+      prev_version:
+        description: 'Previous Express Version'
+        required: false
+        default: ''
+      curr_version:
+        description: 'Current Express Version'
+        required: false
+        default: ''
+      version:
+        description: 'Express Version'
+        required: false
+        default: ''
+      branch:
+        description: 'Branch Name'
+        required: false
+        default: ''
+
+jobs:
+  load_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch All Branches
+        run: git fetch --all
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Determine Comparison Type
+        id: set_env_vars
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event_name }}" == "push" ]]; then
+            # Branch comparison: Default to master for previous branch and use PR branch for current branch
+            echo "PREV_BRANCH=master" >> $GITHUB_ENV
+            echo "CURR_BRANCH=${{ github.head_ref || github.ref_name }}" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.prev_version }}" && "${{ github.event.inputs.curr_version }}" ]]; then
+            # Version comparison
+            echo "PREV_VERSION=${{ github.event.inputs.prev_version }}" >> $GITHUB_ENV
+            echo "CURR_VERSION=${{ github.event.inputs.curr_version }}" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.branch }}" && "${{ github.event.inputs.version }}" ]]; then
+            # Branch-Version comparison
+            echo "BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          else
+            echo "Invalid input combination. Provide either two branches, two versions, or one branch and one version."
+            exit 1
+          fi
+
+      - name: Install wrk
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wrk
+
+      - name: Start Load Test Server
+        run: node benchmarks/load-test-workflow.js
+        env:
+          PREV_BRANCH: ${{ env.PREV_BRANCH }}
+          CURR_BRANCH: ${{ env.CURR_BRANCH }}
+          PREV_VERSION: ${{ env.PREV_VERSION }}
+          CURR_VERSION: ${{ env.CURR_VERSION }}
+          BRANCH: ${{ env.BRANCH }}
+          VERSION: ${{ env.VERSION }}
+
+      - name: Output Summary
+        run: |
+          cat benchmarks/results*.md >> $GITHUB_STEP_SUMMARY
+

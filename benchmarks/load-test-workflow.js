@@ -75,6 +75,7 @@ const runTests = async ({
     runCommand(`git fetch origin ${identifier}`)
     runCommand(`git checkout ${identifier}`)
     runCommand('npm install')
+    console.log('Installing deps...')
   }
 
   const resultsMarkdown = [

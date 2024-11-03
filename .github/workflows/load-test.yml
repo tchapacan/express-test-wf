@@ -52,7 +52,6 @@ jobs:
           node-version: '20'
 
       - name: Determine Comparison Type
-        id: set_env_vars
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event_name }}" == "push" ]]; then
             # Branch comparison: Default to master for previous branch and use PR branch for current branch

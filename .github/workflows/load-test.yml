@@ -58,6 +58,10 @@ jobs:
             # Branch comparison: Default to master for previous branch and use PR branch for current branch
             echo "PREV_BRANCH=main" >> $GITHUB_ENV
             echo "CURR_BRANCH=${{ github.head_ref || github.ref_name }}" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.prev_branch }}" && "${{ github.event.inputs.curr_branch }}" ]]; then
+            # Version comparison
+            echo "PREV_BRANCH=${{ github.event.inputs.prev_branch }}" >> $GITHUB_ENV
+            echo "CURR_BRANCH=${{ github.event.inputs.curr_branch }}" >> $GITHUB_ENV
           elif [[ "${{ github.event.inputs.prev_version }}" && "${{ github.event.inputs.curr_version }}" ]]; then
             # Version comparison
             echo "PREV_VERSION=${{ github.event.inputs.prev_version }}" >> $GITHUB_ENV

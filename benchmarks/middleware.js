@@ -1,5 +1,4 @@
-
-const express = process.env.NO_LOCAL_EXPRESS ? require('express') : require('..');
+const express = process.env.NO_LOCAL_EXPRESS === "true" ? require('express') : require('..');
 const app = express();
 
 // number of middleware

@@ -72,6 +72,7 @@ const runTests = async ({
     runCommand(`npm install express@${identifier}`)
   } else {
     console.log(`Checking out branch ${identifier}...`)
+    runCommand(`git fetch origin ${identifier}`)
     runCommand(`git checkout ${identifier}`)
     runCommand('npm install')
   }
@@ -172,7 +173,7 @@ const compareBranchAndVersion = async ({
 }
 
 const main = async () => {
-  const connectionsList = [50, 100, 250, 500]
+  const connectionsList = [50, 100, 250]
   const middlewareCounts = [1, 10, 25, 50]
   const prevBranch = process.env.PREV_BRANCH
   const currBranch = process.env.CURR_BRANCH
